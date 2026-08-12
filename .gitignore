@@ -1,0 +1,11 @@
+.DS_Store
+.build/
+.superpowers/
+outputs/
+work/
+windows/**/bin/
+windows/**/obj/
+windows/artifacts/
+*.user
+*.suo
+

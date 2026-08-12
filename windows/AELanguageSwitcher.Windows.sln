@@ -1,0 +1,31 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AELanguageSwitcher.Core", "src\AELanguageSwitcher.Core\AELanguageSwitcher.Core.csproj", "{B56C7B4E-75D1-4BB4-9EA8-34D9277E00A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AELanguageSwitcher.App", "src\AELanguageSwitcher.App\AELanguageSwitcher.App.csproj", "{395B151D-85DA-48C5-8ADC-8122070B65B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AELanguageSwitcher.Core.Tests", "tests\AELanguageSwitcher.Core.Tests\AELanguageSwitcher.Core.Tests.csproj", "{CCDD2164-D725-4835-9FE5-8326C306966C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B56C7B4E-75D1-4BB4-9EA8-34D9277E00A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B56C7B4E-75D1-4BB4-9EA8-34D9277E00A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B56C7B4E-75D1-4BB4-9EA8-34D9277E00A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B56C7B4E-75D1-4BB4-9EA8-34D9277E00A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{395B151D-85DA-48C5-8ADC-8122070B65B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{395B151D-85DA-48C5-8ADC-8122070B65B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{395B151D-85DA-48C5-8ADC-8122070B65B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{395B151D-85DA-48C5-8ADC-8122070B65B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCDD2164-D725-4835-9FE5-8326C306966C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCDD2164-D725-4835-9FE5-8326C306966C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCDD2164-D725-4835-9FE5-8326C306966C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCDD2164-D725-4835-9FE5-8326C306966C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
+
