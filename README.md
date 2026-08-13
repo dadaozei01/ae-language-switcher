@@ -4,7 +4,12 @@
 
 ## Windows 版
 
-从 [GitHub Releases](https://github.com/dadaozei01/ae-language-switcher/releases) 下载 `AE-Language-Switcher-win-x64.exe`，双击即可运行，无需安装 .NET 或管理员权限。
+从 [GitHub Releases](https://github.com/dadaozei01/ae-language-switcher/releases) 下载：
+
+- **推荐／免安装版**：`AE-Language-Switcher-win-x64.exe`，自带运行环境，下载后直接运行。
+- **小体积版**：`AE-Language-Switcher-win-x64-lite.exe`，功能完全相同，需要预先安装 Microsoft .NET 8 Desktop Runtime x64。
+
+不确定时请选择免安装版。两个版本都可以使用 Release 页面中对应的 `.sha256` 文件校验完整性，均不需要管理员权限。
 
 - 支持 Windows 10/11 x64。
 - 从卸载注册表与 `Program Files/Adobe` 自动查找所有 After Effects 正式版，排除 Render Engine，并允许选择要修改的具体版本。
@@ -13,7 +18,7 @@
 - 修改前必须退出所有 AE。工具备份偏好文件、原子替换并读回验证；不会修改 Premiere Pro、Photoshop 或 `Program Files`。
 - 旧的全局空白 `ae_force_english.txt` 会被安全隔离，避免它继续强制所有 AE 版本为英文；非空文件、目录或链接会被拒绝处理。
 - `ApplicationLanguage` 是 AE 的内部版本级偏好，并非 Adobe 公开 API；AE 更新或重置偏好后可能需要重新设置。
-- Windows 单文件 EXE 为自包含构建，不依赖预装 .NET Runtime。首次下载时，Microsoft Defender/SmartScreen 可能提示未知发布者；可核对 Release 同页的 SHA-256。当前版本未购买代码签名证书。
+- Windows 两个版本均为单文件 EXE；免安装版自带运行环境，Lite 版依赖 .NET 8 Desktop Runtime x64。首次下载时，Microsoft Defender/SmartScreen 可能提示未知发布者；可核对 Release 同页的 SHA-256。当前版本未购买代码签名证书。
 
 ### Windows 构建
 
@@ -21,13 +26,10 @@
 
 ```powershell
 dotnet test windows/AELanguageSwitcher.Windows.sln -c Release
-dotnet publish windows/src/AELanguageSwitcher.App/AELanguageSwitcher.App.csproj `
-  -c Release -r win-x64 --self-contained true `
-  -p:PublishSingleFile=true -p:PublishTrimmed=false `
-  -o windows/artifacts/win-x64
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package_windows.ps1
 ```
 
-生成文件为 `windows/artifacts/win-x64/AE-Language-Switcher.exe`。
+生成的两个 EXE 与各自的 SHA-256 校验文件位于 `windows/artifacts/dist`。
 
 ## 精简界面
 
