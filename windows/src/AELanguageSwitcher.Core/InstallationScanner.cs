@@ -205,7 +205,9 @@ public sealed class WindowsResourceProbe : IResourceProbe
             Path.Combine(supportFiles, "Dictionaries"),
             Path.Combine(supportFiles, "AMT"),
             Path.Combine(supportFiles, "Resources"),
-            Path.Combine(supportFiles, "zdictionaries")
+            Path.Combine(supportFiles, "zdictionaries"),
+            Path.Combine(supportFiles, "zstring"),
+            Path.Combine(supportFiles, "Libraries", "locale")
         };
 
         if (ContainsLocale(roots, "zh_CN"))

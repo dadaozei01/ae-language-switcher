@@ -7,10 +7,12 @@
 从 [GitHub Releases](https://github.com/dadaozei01/ae-language-switcher/releases) 下载 `AE-Language-Switcher-win-x64.exe`，双击即可运行，无需安装 .NET 或管理员权限。
 
 - 支持 Windows 10/11 x64。
-- 从卸载注册表与 `Program Files/Adobe` 自动查找 After Effects，排除 Render Engine，并优先选择最高版本。
+- 从卸载注册表与 `Program Files/Adobe` 自动查找所有 After Effects 正式版，排除 Render Engine，并允许选择要修改的具体版本。
 - 切换前会检查 `AfterFX.exe` 是否正在运行，不会启动或结束任何 Adobe 进程。
-- 只操作当前用户“文档”目录中的 `ae_force_english.txt`，不会修改 Premiere Pro 或 Photoshop 的配置。
-- 中文切换要求 Windows 首选界面语言为简体中文，且 AE 安装中存在简体中文资源。
+- 每个版本独立读写 `%APPDATA%/Adobe/After Effects/<版本>/Debug Database.txt` 中的 `ApplicationLanguage`，可分别设置为 `zh_CN` 或 `en_US`。
+- 修改前必须退出所有 AE。工具备份偏好文件、原子替换并读回验证；不会修改 Premiere Pro、Photoshop 或 `Program Files`。
+- 旧的全局空白 `ae_force_english.txt` 会被安全隔离，避免它继续强制所有 AE 版本为英文；非空文件、目录或链接会被拒绝处理。
+- `ApplicationLanguage` 是 AE 的内部版本级偏好，并非 Adobe 公开 API；AE 更新或重置偏好后可能需要重新设置。
 - Windows 单文件 EXE 为自包含构建，不依赖预装 .NET Runtime。首次下载时，Microsoft Defender/SmartScreen 可能提示未知发布者；可核对 Release 同页的 SHA-256。当前版本未购买代码签名证书。
 
 ### Windows 构建
@@ -29,7 +31,7 @@ dotnet publish windows/src/AELanguageSwitcher.App/AELanguageSwitcher.App.csproj 
 
 ## 精简界面
 
-主窗口是紧凑的单按钮布局。右上角的 `中文 | English` 只读状态会高亮当前语言；中央按钮则根据当前状态自动显示“切换到 English”或“切换到中文”。底部保留“重新扫描”；扫描本身不会触发语言切换。
+Windows 主窗口列出所有检测到的 AE 版本。选择具体版本后可分别点击“切换为简体中文”或“切换为 English”；扫描和选择本身不会修改语言。
 
 ## macOS 系统与行为
 

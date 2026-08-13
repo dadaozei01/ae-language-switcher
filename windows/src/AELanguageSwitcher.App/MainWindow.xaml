@@ -1,46 +1,39 @@
 <Window x:Class="AELanguageSwitcher.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AE 中英文切换器"
-        Width="420" Height="260"
-        MinWidth="420" MinHeight="260"
-        WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
-        Background="#F7F7FA"
-        Loaded="Window_Loaded"
-        Activated="Window_Activated">
+        Title="AE 中英文切换器" Width="600" Height="430"
+        MinWidth="520" MinHeight="390" WindowStartupLocation="CenterScreen"
+        Background="#F7F7FA" Icon="Resources/AppIcon.ico" Loaded="Window_Loaded" Activated="Window_Activated">
     <Grid Margin="28,22">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/><RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-
-        <Grid>
-            <TextBlock Text="AE 中英文切换器" FontSize="19" FontWeight="SemiBold"
-                       Foreground="#1D1D23" VerticalAlignment="Center" />
-            <TextBlock Text="{Binding LanguageLabel}" HorizontalAlignment="Right"
-                       FontSize="13" Foreground="{StaticResource AccentBrush}"
-                       VerticalAlignment="Center"
-                       AutomationProperties.Name="当前 After Effects 语言" />
-        </Grid>
-
-        <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Button Content="{Binding PrimaryButtonText}"
-                    Command="{Binding SwitchCommand}"
-                    IsEnabled="{Binding CanSwitch}"
-                    MinWidth="190" Height="44"
-                    Background="{StaticResource AccentBrush}" Foreground="White"
-                    BorderThickness="0"
-                    AutomationProperties.Name="切换 After Effects 语言" />
-            <TextBlock Text="{Binding StatusMessage}" Margin="0,14,0,0"
-                       MaxWidth="340" TextAlignment="Center" TextWrapping="Wrap"
-                       FontSize="12" Foreground="#686873" />
+        <TextBlock Text="AE 中英文切换器" FontSize="21" FontWeight="SemiBold" Foreground="#1D1D23"/>
+        <StackPanel Grid.Row="1" Margin="0,20,0,0">
+            <TextBlock Text="选择 After Effects 版本" Margin="0,0,0,6"/>
+            <ComboBox ItemsSource="{Binding Installations}" SelectedItem="{Binding SelectedInstallation}"
+                      IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
+                      AutomationProperties.Name="After Effects 版本">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate><StackPanel Orientation="Horizontal"><TextBlock Text="{Binding DisplayName}"/><TextBlock Text="  "/><TextBlock Text="{Binding Version}"/></StackPanel></DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
         </StackPanel>
-
-        <Button Grid.Row="2" Content="重新扫描" Command="{Binding RefreshCommand}"
-                HorizontalAlignment="Center" Padding="12,5" FontSize="12"
-                Background="Transparent" BorderThickness="0" Foreground="#565661"
-                AutomationProperties.Name="重新扫描 After Effects" />
+        <Border Grid.Row="2" Margin="0,18,0,18" Padding="18" CornerRadius="8" Background="White">
+            <StackPanel>
+                <TextBlock Text="{Binding SelectedVersionLabel}" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding InstallationPath}" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="#686873"/>
+                <TextBlock Text="{Binding ResourceStatus}" Margin="0,8,0,0"/>
+                <TextBlock Text="{Binding VersionLanguageLabel}" Margin="0,8,0,0" Foreground="{StaticResource AccentBrush}"/>
+                <TextBlock Text="{Binding StatusMessage}" Margin="0,10,0,0" TextWrapping="Wrap" Foreground="#686873"/>
+            </StackPanel>
+        </Border>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Margin="0,0,8,0" Height="42" Content="切换为简体中文" Command="{Binding SwitchToChineseCommand}" AutomationProperties.Name="切换所选版本为简体中文"/>
+            <Button Grid.Column="1" Margin="8,0" Height="42" Content="切换为 English" Command="{Binding SwitchToEnglishCommand}" AutomationProperties.Name="切换所选版本为 English"/>
+            <Button Grid.Column="2" Margin="8,0,0,0" Padding="14,5" Content="重新扫描" Command="{Binding RefreshCommand}"/>
+        </Grid>
     </Grid>
 </Window>

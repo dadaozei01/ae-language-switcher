@@ -6,6 +6,26 @@ namespace AELanguageSwitcher.Core.Tests;
 public sealed class MainViewModelTests
 {
     [TestMethod]
+    public void RefreshExposesAllVersionsAndSelectionCanChange()
+    {
+        var newest = Installation("26.0");
+        var older = Installation("25.0");
+        var model = MakeVersionModel(new ScannerFake(newest, older));
+        model.Refresh();
+        Assert.AreEqual(2, model.Installations.Count);
+        Assert.AreEqual(newest, model.SelectedInstallation);
+        model.SelectedInstallation = older;
+        Assert.AreEqual(older, model.SelectedInstallation);
+    }
+
+    private static MainViewModel MakeVersionModel(IInstallationScanner scanner) => new(
+        scanner,
+        new VersionDetectorFake(),
+        new ProcessMonitorFake(false),
+        new VersionSwitcherFake(),
+        new DialogFake());
+
+    [TestMethod]
     public void RefreshSelectsHighestInstallationAndTargetsEnglish()
     {
         var newest = Installation("26.0");
@@ -89,6 +109,19 @@ public sealed class MainViewModelTests
         ChineseEligibility.Available,
         language == EffectiveLanguage.English,
         "zh-CN");
+}
+
+internal sealed class VersionDetectorFake : IVersionLanguageDetector
+{
+    public VersionLanguageState Detect(AEInstallation installation) =>
+        new(EffectiveLanguage.Unknown, string.Empty, "db", false);
+}
+
+internal sealed class VersionSwitcherFake : IVersionLanguageSwitcher
+{
+    public VersionLanguageState Switch(AEInstallation installation, TargetLanguage target) =>
+        new(target == TargetLanguage.English ? EffectiveLanguage.English : EffectiveLanguage.SimplifiedChinese,
+            target == TargetLanguage.English ? "en_US" : "zh_CN", "db", false);
 }
 
 internal sealed class ScannerFake(params AEInstallation[] installations) : IInstallationScanner

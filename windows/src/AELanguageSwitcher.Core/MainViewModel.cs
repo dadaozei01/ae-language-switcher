@@ -16,6 +16,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly IAfterEffectsProcessMonitor _processMonitor;
     private readonly ILanguageSwitcher _switcher;
     private readonly IUserDialog _dialog;
+    private readonly IVersionLanguageDetector? _versionDetector;
+    private readonly IVersionLanguageSwitcher? _versionSwitcher;
+    private IReadOnlyList<AEInstallation> _installations = Array.Empty<AEInstallation>();
+    private VersionLanguageState? _versionLanguageState;
     private LanguageState? _languageState;
     private AEInstallation? _selectedInstallation;
     private string _statusMessage = "正在扫描…";
@@ -35,17 +39,45 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _dialog = dialog;
         RefreshCommand = new RelayCommand(Refresh, () => !IsBusy);
         SwitchCommand = new RelayCommand(RequestSwitch, () => CanSwitch);
+        SwitchToChineseCommand = new RelayCommand(() => RequestVersionSwitch(TargetLanguage.SimplifiedChinese), () => CanSwitchToChinese);
+        SwitchToEnglishCommand = new RelayCommand(() => RequestVersionSwitch(TargetLanguage.English), () => CanSwitchToEnglish);
+    }
+
+    public MainViewModel(
+        IInstallationScanner scanner,
+        IVersionLanguageDetector detector,
+        IAfterEffectsProcessMonitor processMonitor,
+        IVersionLanguageSwitcher switcher,
+        IUserDialog dialog)
+        : this(scanner, new UnusedDetector(), processMonitor, new UnusedSwitcher(), dialog)
+    {
+        _versionDetector = detector;
+        _versionSwitcher = switcher;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ICommand RefreshCommand { get; }
     public ICommand SwitchCommand { get; }
+    public ICommand SwitchToChineseCommand { get; }
+    public ICommand SwitchToEnglishCommand { get; }
+    public IReadOnlyList<AEInstallation> Installations
+    {
+        get => _installations;
+        private set => SetField(ref _installations, value);
+    }
 
     public AEInstallation? SelectedInstallation
     {
         get => _selectedInstallation;
-        private set => SetField(ref _selectedInstallation, value);
+        set
+        {
+            if (SetField(ref _selectedInstallation, value) && _versionDetector is not null)
+            {
+                _versionLanguageState = value is null ? null : _versionDetector.Detect(value);
+                NotifyDerivedState();
+            }
+        }
     }
 
     public bool IsBusy
@@ -85,6 +117,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
         (PrimaryTarget != TargetLanguage.SimplifiedChinese
          || _languageState?.ChineseEligibility == ChineseEligibility.Available);
 
+    public bool CanSwitchToChinese => _versionDetector is not null && !IsBusy && SelectedInstallation is not null
+        && SelectedInstallation.AvailableLocales.Contains(AELocale.SimplifiedChinese)
+        && _versionLanguageState?.Effective != EffectiveLanguage.SimplifiedChinese;
+    public bool CanSwitchToEnglish => _versionDetector is not null && !IsBusy && SelectedInstallation is not null
+        && SelectedInstallation.AvailableLocales.Contains(AELocale.EnglishUS)
+        && _versionLanguageState?.Effective != EffectiveLanguage.English;
+    public string SelectedVersionLabel => SelectedInstallation is null ? "未检测到 After Effects" : $"{SelectedInstallation.DisplayName}（{SelectedInstallation.Version}）";
+    public string InstallationPath => SelectedInstallation?.ExecutablePath ?? string.Empty;
+    public string ResourceStatus => SelectedInstallation is null ? string.Empty :
+        $"中文资源：{(SelectedInstallation.AvailableLocales.Contains(AELocale.SimplifiedChinese) ? "可用" : "缺失")}　English：{(SelectedInstallation.AvailableLocales.Contains(AELocale.EnglishUS) ? "可用" : "缺失")}";
+    public string VersionLanguageLabel => _versionLanguageState?.Effective switch
+    {
+        EffectiveLanguage.English => "当前设置：English",
+        EffectiveLanguage.SimplifiedChinese => "当前设置：简体中文",
+        _ => "当前设置：未设置"
+    };
+
     private TargetLanguage? PrimaryTarget => _languageState?.Effective switch
     {
         EffectiveLanguage.SimplifiedChinese => TargetLanguage.English,
@@ -102,7 +151,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IsBusy = true;
         try
         {
+            var previousPath = SelectedInstallation?.ExecutablePath;
             var installations = _scanner.Scan();
+            if (_versionDetector is not null)
+            {
+                Installations = installations;
+                SelectedInstallation = installations.FirstOrDefault(item =>
+                    string.Equals(item.ExecutablePath, previousPath, StringComparison.OrdinalIgnoreCase))
+                    ?? installations.FirstOrDefault();
+                StatusMessage = SelectedInstallation is null ? "未检测到 After Effects。" : $"已检测到 {installations.Count} 个 After Effects 版本。";
+                NotifyDerivedState();
+                return;
+            }
             SelectedInstallation = installations.FirstOrDefault();
             _languageState = SelectedInstallation is null ? null : _detector.Detect(SelectedInstallation);
             StatusMessage = BuildReadyStatus();
@@ -120,6 +180,29 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             IsBusy = false;
         }
+    }
+
+    private void RequestVersionSwitch(TargetLanguage target)
+    {
+        if (_versionSwitcher is null || SelectedInstallation is null || IsBusy) return;
+        if (_processMonitor.IsRunning())
+        {
+            _dialog.Show("After Effects 正在运行", "请先退出所有正在运行的 After Effects，再修改语言。");
+            return;
+        }
+        IsBusy = true;
+        try
+        {
+            _versionLanguageState = _versionSwitcher.Switch(SelectedInstallation, target);
+            StatusMessage = $"After Effects {SelectedInstallation.Version} 已设置为 {(target == TargetLanguage.English ? "English" : "简体中文")}，重启该版本后生效。";
+            NotifyDerivedState();
+        }
+        catch (Exception error)
+        {
+            StatusMessage = error.Message;
+            _dialog.Show("语言切换失败", error.Message);
+        }
+        finally { IsBusy = false; }
     }
 
     public void RequestSwitch()
@@ -198,6 +281,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanSwitch));
         (RefreshCommand as RelayCommand)?.RaiseCanExecuteChanged();
         (SwitchCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (SwitchToChineseCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        (SwitchToEnglishCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(SelectedVersionLabel));
+        OnPropertyChanged(nameof(InstallationPath));
+        OnPropertyChanged(nameof(ResourceStatus));
+        OnPropertyChanged(nameof(VersionLanguageLabel));
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
@@ -213,6 +302,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+file sealed class UnusedDetector : ILanguageStateDetector
+{
+    public LanguageState Detect(AEInstallation installation) => throw new NotSupportedException();
+}
+
+file sealed class UnusedSwitcher : ILanguageSwitcher
+{
+    public void Switch(TargetLanguage target, ChineseEligibility chineseEligibility) => throw new NotSupportedException();
 }
 
 public sealed class RelayCommand(Action execute, Func<bool>? canExecute = null) : ICommand

@@ -14,10 +14,11 @@
 
 - 平台：Windows 10/11 x64，.NET 8 WPF 自包含单文件。
 - 发布文件：`AE-Language-Switcher-win-x64.exe`。
-- 安装检测：64/32 位卸载注册表，并回退扫描 `Program Files/Adobe`；排除 Render Engine，选择最高版本。
-- Windows 语言标记：当前用户“文档”目录的 `ae_force_english.txt`。
+- 安装检测：64/32 位卸载注册表，并回退扫描 `Program Files/Adobe`；排除 Render Engine，返回全部版本供用户选择。
+- Windows 版本级语言：`%APPDATA%/Adobe/After Effects/<major.minor>/Debug Database.txt` 的 `ApplicationLanguage` 当前值。
 - 进程检测：任何名为 `AfterFX` 的进程运行时阻止切换。
-- 简体中文资格：AE 存在 `zh_CN` 资源，且 Windows 当前 UI 首选语言为 `zh-CN` 或 `zh-Hans`。
+- 简体中文资格：所选 AE 存在 `zh_CN` 资源；English 要求 `en_US` 资源。
+- 写入前备份并迁移旧全局空 marker，使用同目录临时文件和原子替换，读回验证失败时回滚。
 - 构建发布：`.github/workflows/windows.yml` 在 Windows runner 上测试并生成自包含 `win-x64` 单文件；`v*` 标签会创建 GitHub Release，并附带 EXE 与 SHA-256。
 
 ## PR 曾被联动的原因

@@ -23,12 +23,18 @@ public partial class App : Application
             new WindowsInstallationSource(),
             new FileExecutableMetadata(),
             new WindowsResourceProbe());
-        var languageEnvironment = new WindowsLanguageEnvironment(markerPath);
+        var preferencesRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Adobe", "After Effects");
+        var ccxRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Adobe", "CCX Welcome");
+        var locator = new VersionLanguagePreferenceLocator(preferencesRoot);
         var viewModel = new MainViewModel(
             scanner,
-            new LanguageStateDetector(languageEnvironment),
+            new VersionLanguageDetector(locator, new CcxProductLanguageHistory(ccxRoot)),
             new AfterEffectsProcessMonitor(new WindowsProcessSnapshot()),
-            new MarkerSwitcher(markerPath),
+            new VersionLanguageSwitcher(locator, new LegacyMarkerMigrator(markerPath)),
             new WpfUserDialog());
 
         MainWindow = new MainWindow { DataContext = viewModel };
