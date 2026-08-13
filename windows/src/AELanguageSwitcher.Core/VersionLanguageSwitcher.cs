@@ -15,7 +15,9 @@ public sealed class VersionLanguageSwitcher(
     {
         var path = locator.GetDatabasePath(installation);
         if (!File.Exists(path))
-            throw new LanguageSwitchException(LanguageSwitchErrorCode.FileOperation, "该版本尚未生成 Debug Database.txt，请先正常启动并退出一次。");
+            throw new LanguageSwitchException(
+                LanguageSwitchErrorCode.FileOperation,
+                "该版本尚未生成 Debug Database.txt。请打开此版本 AE，按 Ctrl+F12 打开控制台，在控制台菜单中选择 Debug Database View，然后关闭 AE 并重新扫描。");
 
         var original = File.ReadAllBytes(path);
         var parsed = DebugDatabaseParser.Parse(original);

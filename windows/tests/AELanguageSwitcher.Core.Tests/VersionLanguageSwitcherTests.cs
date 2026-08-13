@@ -7,6 +7,23 @@ namespace AELanguageSwitcher.Core.Tests;
 public sealed class VersionLanguageSwitcherTests
 {
     [TestMethod]
+    public void MissingDatabaseExplainsHowToGenerateIt()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"ae-version-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        try
+        {
+            var install = new AEInstallation("AE", "25.3", @"C:\AE\AfterFX.exe", new HashSet<AELocale>());
+            var error = Assert.ThrowsException<LanguageSwitchException>(() =>
+                new VersionLanguageSwitcher(new VersionLanguagePreferenceLocator(root), new LegacyMarkerMigrator(Path.Combine(root, "marker")))
+                    .Switch(install, TargetLanguage.English));
+            StringAssert.Contains(error.Message, "Ctrl+F12");
+            StringAssert.Contains(error.Message, "Debug Database View");
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
+    [TestMethod]
     public void SwitchChangesOnlySelectedVersionAndMigratesEmptyMarker()
     {
         var root = Path.Combine(Path.GetTempPath(), $"ae-version-{Guid.NewGuid():N}");
