@@ -41,7 +41,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          body_path: .github/release-notes/v1.0.0.md
+          body_path: .github/release-notes/${{ github.ref_name }}.md
           files: |
             windows/artifacts/dist/AE-Language-Switcher-win-x64.exe
             windows/artifacts/dist/AE-Language-Switcher-win-x64.exe.sha256
