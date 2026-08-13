@@ -32,7 +32,19 @@ public sealed class VersionLanguagePreferenceLocator(string preferencesRoot)
             throw new ArgumentException("After Effects 版本号缺少有效的主版本和次版本。", nameof(installation));
         }
 
-        return Path.Combine(preferencesRoot, $"{match.Groups["major"].Value}.{match.Groups["minor"].Value}", "Debug Database.txt");
+        var major = match.Groups["major"].Value;
+        var minor = match.Groups["minor"].Value;
+        var exactPath = Path.Combine(preferencesRoot, $"{major}.{minor}", "Debug Database.txt");
+        if (File.Exists(exactPath))
+        {
+            return exactPath;
+        }
+
+        // Some AE updates keep their Debug Database in the major-version family
+        // folder (for example AE 25.3 writes it under 25.0), while the rest of
+        // their preferences remain in the exact 25.3 folder.
+        var familyPath = Path.Combine(preferencesRoot, $"{major}.0", "Debug Database.txt");
+        return File.Exists(familyPath) ? familyPath : exactPath;
     }
 }
 

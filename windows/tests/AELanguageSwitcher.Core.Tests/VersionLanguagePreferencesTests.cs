@@ -21,6 +21,22 @@ public sealed class VersionLanguagePreferencesTests
         Assert.AreEqual(Path.Combine(@"C:\Prefs", folder, "Debug Database.txt"), path);
     }
 
+    [TestMethod]
+    public void LocatorFallsBackToMajorZeroDatabaseUsedByAeUpdates()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var familyFolder = Path.Combine(root, "25.0");
+        Directory.CreateDirectory(familyFolder);
+        File.WriteAllText(Path.Combine(familyFolder, "Debug Database.txt"), "ApplicationLanguage\t\t\r\n");
+        try
+        {
+            var installation = new AEInstallation("AE", "25.3.0x5", @"C:\AE\AfterFX.exe", new HashSet<AELocale>());
+            var path = new VersionLanguagePreferenceLocator(root).GetDatabasePath(installation);
+            Assert.AreEqual(Path.Combine(familyFolder, "Debug Database.txt"), path);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
     [DataTestMethod]
     [DataRow("en_US", EffectiveLanguage.English)]
     [DataRow("zh_CN", EffectiveLanguage.SimplifiedChinese)]
