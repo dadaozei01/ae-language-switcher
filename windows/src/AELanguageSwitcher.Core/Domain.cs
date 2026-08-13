@@ -10,7 +10,8 @@ public enum EffectiveLanguage
 {
     English,
     SimplifiedChinese,
-    SystemDefault
+    SystemDefault,
+    Unknown
 }
 
 public enum TargetLanguage
