@@ -13,7 +13,6 @@
         <StackPanel Grid.Row="1" Margin="0,20,0,0">
             <TextBlock Text="选择 After Effects 版本" Margin="0,0,0,6"/>
             <ComboBox ItemsSource="{Binding Installations}" SelectedItem="{Binding SelectedInstallation}"
-                      IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                       AutomationProperties.Name="After Effects 版本">
                 <ComboBox.ItemTemplate>
                     <DataTemplate><StackPanel Orientation="Horizontal"><TextBlock Text="{Binding DisplayName}"/><TextBlock Text="  "/><TextBlock Text="{Binding Version}"/></StackPanel></DataTemplate>
