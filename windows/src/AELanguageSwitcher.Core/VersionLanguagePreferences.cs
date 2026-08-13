@@ -70,3 +70,60 @@ public static class DebugDatabaseParser
             matches[0].index);
     }
 }
+
+public interface IProductLanguageHistory
+{
+    string? GetLatest(string productVersion);
+}
+
+public interface IVersionLanguageDetector
+{
+    VersionLanguageState Detect(AEInstallation installation);
+}
+
+public sealed class VersionLanguageDetector(
+    VersionLanguagePreferenceLocator locator,
+    IProductLanguageHistory history) : IVersionLanguageDetector
+{
+    public VersionLanguageState Detect(AEInstallation installation)
+    {
+        var path = locator.GetDatabasePath(installation);
+        if (!File.Exists(path))
+        {
+            return new VersionLanguageState(EffectiveLanguage.Unknown, string.Empty, path, false);
+        }
+
+        var parsed = DebugDatabaseParser.Parse(File.ReadAllBytes(path));
+        if (parsed.Effective != EffectiveLanguage.Unknown || !string.IsNullOrEmpty(parsed.Language))
+        {
+            return new VersionLanguageState(parsed.Effective, parsed.Language, path, false);
+        }
+
+        var fallback = history.GetLatest(installation.Version) ?? string.Empty;
+        return new VersionLanguageState(ToEffective(fallback), fallback, path, !string.IsNullOrEmpty(fallback));
+    }
+
+    internal static EffectiveLanguage ToEffective(string language) => language switch
+    {
+        "en_US" => EffectiveLanguage.English,
+        "zh_CN" => EffectiveLanguage.SimplifiedChinese,
+        _ => EffectiveLanguage.Unknown
+    };
+}
+
+public sealed class CcxProductLanguageHistory(string ccxRoot) : IProductLanguageHistory
+{
+    public string? GetLatest(string productVersion)
+    {
+        var match = Regex.Match(productVersion, @"^(\d+)\.(\d+)");
+        if (!match.Success || !Directory.Exists(ccxRoot)) return null;
+        var prefix = $"AEFT-{match.Groups[1].Value}-{match.Groups[2].Value}-";
+        return Directory.EnumerateFiles(ccxRoot, $"{prefix}*.json", SearchOption.AllDirectories)
+            .Select(path => new { path, name = Path.GetFileName(path) })
+            .Select(item => new { item.path, match = Regex.Match(item.name, $@"^{Regex.Escape(prefix)}(?<locale>[a-z]{{2}}_[A-Z]{{2}})-") })
+            .Where(item => item.match.Success)
+            .OrderByDescending(item => File.GetLastWriteTimeUtc(item.path))
+            .Select(item => item.match.Groups["locale"].Value)
+            .FirstOrDefault();
+    }
+}

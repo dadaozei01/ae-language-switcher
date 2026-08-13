@@ -6,6 +6,11 @@ namespace AELanguageSwitcher.Core.Tests;
 [TestClass]
 public sealed class VersionLanguagePreferencesTests
 {
+    private sealed class HistoryFake(string? language) : IProductLanguageHistory
+    {
+        public string? GetLatest(string productVersion) => language;
+    }
+
     [DataTestMethod]
     [DataRow("25.3.0x5", "25.3")]
     [DataRow("24.6.2", "24.6")]
@@ -46,5 +51,22 @@ public sealed class VersionLanguagePreferencesTests
     {
         Assert.ThrowsException<PreferenceFormatException>(() =>
             DebugDatabaseParser.Parse(Encoding.UTF8.GetBytes(text)));
+    }
+
+    [TestMethod]
+    public void DetectorUsesBlankDatabaseValueFallback()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var folder = Path.Combine(root, "25.3");
+        Directory.CreateDirectory(folder);
+        File.WriteAllText(Path.Combine(folder, "Debug Database.txt"), "ApplicationLanguage\t\t\r\n");
+        try
+        {
+            var installation = new AEInstallation("AE", "25.3.1", @"C:\AE\AfterFX.exe", new HashSet<AELocale>());
+            var state = new VersionLanguageDetector(new VersionLanguagePreferenceLocator(root), new HistoryFake("zh_CN")).Detect(installation);
+            Assert.AreEqual(EffectiveLanguage.SimplifiedChinese, state.Effective);
+            Assert.IsTrue(state.IsFallback);
+        }
+        finally { Directory.Delete(root, true); }
     }
 }

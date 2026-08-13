@@ -1,5 +1,37 @@
 namespace AELanguageSwitcher.Core;
 
+public interface ILegacyMarkerTransaction : IDisposable
+{
+    void Commit();
+}
+
+public sealed class LegacyMarkerMigrator(string markerPath)
+{
+    public ILegacyMarkerTransaction Prepare()
+    {
+        if (!File.Exists(markerPath) && !Directory.Exists(markerPath)) return new MarkerTransaction(null, null);
+        var attributes = File.GetAttributes(markerPath);
+        if ((attributes & (FileAttributes.Directory | FileAttributes.ReparsePoint)) != 0)
+            throw new LanguageSwitchException(LanguageSwitchErrorCode.UnsafeMarkerType, "全局语言标记不是安全的普通文件。");
+        if (new FileInfo(markerPath).Length != 0)
+            throw new LanguageSwitchException(LanguageSwitchErrorCode.NonEmptyMarker, "全局语言标记包含内容，未做修改。");
+        var quarantine = Path.Combine(Path.GetDirectoryName(markerPath)!, $".ae-language-switcher-{Guid.NewGuid():N}.quarantine");
+        File.Move(markerPath, quarantine);
+        return new MarkerTransaction(markerPath, quarantine);
+    }
+
+    private sealed class MarkerTransaction(string? original, string? quarantine) : ILegacyMarkerTransaction
+    {
+        private bool _committed;
+        public void Commit() => _committed = true;
+        public void Dispose()
+        {
+            if (!_committed && original is not null && quarantine is not null && File.Exists(quarantine) && !File.Exists(original))
+                File.Move(quarantine, original);
+        }
+    }
+}
+
 public enum LanguageSwitchErrorCode
 {
     ChineseUnavailable,
